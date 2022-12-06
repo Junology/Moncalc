@@ -87,6 +87,7 @@ theorem eqF_List {α : Type u} [Category α] {β : Type v} [Category β] : (F G 
   cases this
   rfl
 
+--- Left unitality of `List` with respect to `joinF` as multiplication and `singletonF` as unit.
 theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List α) ⋙ joinF = Functor.id (List α) := by
   dsimp [Functor.comp, Functor.id]
   dsimp [singletonF, joinF, DVect2.join]
@@ -98,7 +99,26 @@ theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List
     dsimp
     exact DVect2.append_nil _
 
-theorem joinF_singletonF_right {α : Type u} [Category α] : mapF singletonF ⋙ joinF = Functor.id (List α) := sorry
+--- Right unitality of `List` with respect to `joinF` as multiplication and `singletonF` as unit.
+theorem joinF_singletonF_right {α : Type u} [Category α] : mapF singletonF ⋙ joinF = Functor.id (List α) := by
+  dsimp [Functor.comp, Functor.id]
+  dsimp [singletonF, joinF, mapF, DVect2.join]
+  apply eqF_List
+  . intro as
+    dsimp
+    induction as
+    case a.nil => rfl
+    case a.cons a as h_ind => dsimp; rw [h_ind]
+  . intro as bs fs
+    dsimp
+    induction fs
+    case a.nil =>
+      dsimp [DVect2.map, DVect2.join]
+      exact DVect2.Eq.of rfl
+    case a.cons a as b bs f fs h_ind =>
+      dsimp [DVect2.map, DVect2.join]
+      rw [DVect2.cons_append, DVect2.nil_append]
+      exact DVect2.Eq.descend rfl h_ind
 
 theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF = mapF joinF ⋙ joinF := sorry
 
