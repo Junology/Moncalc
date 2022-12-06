@@ -17,6 +17,7 @@ universe u v
   2-monad structure on `List` as an endo-functor on Cat
 -/
 
+--- The functor `List (List α) ⥤ List α` consisting of `List.join` on objects and `DVect2.join` on morhisms.
 def joinF {α : Type u} [Category α] : CategoryTheory.Functor (List (List α)) (List α) where
   obj := List.join
   map := DVect2.join
@@ -34,16 +35,19 @@ def joinF {α : Type u} [Category α] : CategoryTheory.Functor (List (List α)) 
     simp [CategoryStruct.comp]
     rw [comp_join]
 
+--- The functorial embedding of `α` into `List α`.
 def singletonF {α : Type u} [Category α] : CategoryTheory.Functor α (List α) where
   obj := λ a => [a]
   map := λ f => DVect2.cons f DVect2.nil
 
+--- Auxiliary lemma that for every functor `F : α ⥤ β`, the construction `DVect2.map F.obj F.obj F.map : Hom as₁ as₂ → Hom (map F.obj as₁) (map F.obj as₂)` preserves the composition `List.comp`.
 theorem mapF_comp {α : Type u} [Category α] {β : Type v} [Category β] (Φ : CategoryTheory.Functor α β) : ∀ {as bs cs : List α} (fs : Hom as bs) (gs : Hom bs cs), List.comp (DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) fs) (DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) gs) = DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) (List.comp fs gs)
 | [], [], [], DVect2.nil, DVect2.nil => rfl
 | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => by
   dsimp [DVect2.map, List.comp]
   rw [Φ.map_comp, mapF_comp Φ fs gs]
 
+--- for a given functor `F : α ⥤ β`, `mapF F : List α ⥤ List β` is the functor consisting of `map F.obj` on objects and `DVect2 F.obj F.obj F.map` on morphisms.
 def mapF {α : Type u} {β : Type v} [Category α] [Category β] (Φ : CategoryTheory.Functor α β) : CategoryTheory.Functor (List α) (List β) where
   obj := List.map Φ.obj
   map := DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor)

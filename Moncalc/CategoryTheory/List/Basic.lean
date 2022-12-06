@@ -27,11 +27,13 @@ protected
 def id : (as : List α) → Hom as as :=
   DVect2.fromList Quiver.Hom CategoryStruct.id
 
+-- Due to `Mathlib4` convention, `comp f g` applies `f` "before" `g`.
 protected
 def comp : {as bs cs : List α} → Hom as bs → Hom bs cs → Hom as cs
 | [], [], [], DVect2.nil, DVect2.nil => DVect2.nil
 | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => DVect2.cons (f ≫ g) (List.comp fs gs)
 
+-- Right unitality of the composition in `List α`; see the comment on `comp` function for the composition order.
 protected
 theorem id_comp : ∀ {as bs : List α} (fs : Hom as bs), List.comp (List.id as) fs = fs
 | [], [], DVect2.nil => rfl
@@ -39,6 +41,7 @@ theorem id_comp : ∀ {as bs : List α} (fs : Hom as bs), List.comp (List.id as)
   dsimp [List.comp]
   rw [Category.id_comp, List.id_comp fs]
 
+-- The left unitality of the composition in `List α`; see the comments on `comp` function for the composition order.
 protected
 theorem comp_id : ∀ {as bs : List α} (fs : Hom as bs), List.comp fs (List.id bs) = fs
 | [], [], DVect2.nil => rfl
@@ -46,6 +49,7 @@ theorem comp_id : ∀ {as bs : List α} (fs : Hom as bs), List.comp fs (List.id 
   dsimp [List.comp]
   rw [Category.comp_id, List.comp_id fs]
 
+-- The associativity of the composition in `List α`.
 protected
 theorem assoc : ∀ {as bs cs ds : List α} (fs : Hom as bs) (gs : Hom bs cs) (hs : Hom cs ds), List.comp (List.comp fs gs) hs = List.comp fs (List.comp gs hs)
 | [], [], [], [], DVect2.nil, DVect2.nil, DVect2.nil => rfl
@@ -53,6 +57,7 @@ theorem assoc : ∀ {as bs cs ds : List α} (fs : Hom as bs) (gs : Hom bs cs) (h
   dsimp [List.comp]
   rw [Category.assoc, List.assoc fs gs hs]
 
+-- `List α` is a `Category` provided `α` is.
 instance instCategoryList : CategoryTheory.Category (List α) where
   Hom := Hom
   id := List.id
@@ -61,6 +66,10 @@ instance instCategoryList : CategoryTheory.Category (List α) where
   comp_id := List.comp_id
   assoc := List.assoc
 
+/--
+  `DVect2.append` enables `Hom as₁ bs₁ → Hom as₂ bs₂ → Hom (as₁++as₂) (bs₁++bs₂)` for `as₁ as₂ bs₁ bs₂ : List α`. 
+  `comp_append` states the functoriality of this construction.
+-/
 theorem comp_append : ∀ {as₁ as₂ bs₁ bs₂ cs₁ cs₂: List α} (fs₁ : Hom as₁ bs₁) (fs₂ : Hom as₂ bs₂) (gs₁ : Hom bs₁ cs₁) (gs₂ : Hom bs₂ cs₂), List.comp (fs₁ ++ fs₂) (gs₁ ++ gs₂) = List.comp fs₁ gs₁ ++ List.comp fs₂ gs₂
 | [], _, [], _, [], _, DVect2.nil, _, DVect2.nil, _ => rfl
 | (_::_), _, (_::_), _, (_::_), _, DVect2.cons _ fs₁, fs₂, DVect2.cons _ gs₁, gs₂ => by
@@ -69,6 +78,10 @@ theorem comp_append : ∀ {as₁ as₂ bs₁ bs₂ cs₁ cs₂: List α} (fs₁ 
   dsimp [List.comp, HAppend.hAppend, DVect2.append] at *
   rw [h_ind]
 
+/--
+  `DVect2.join` enables `Hom ass bss → Hom ass.join bss.join` for `ass bss : List (List α)`.
+  `comp_join` states the functoriality of this construction.
+-/
 theorem comp_join : ∀ {ass bss css : List (List α)} (fss : Hom ass bss) (gss : Hom bss css), List.comp fss.join gss.join = DVect2.join (List.comp fss gss)
 | [], [], [], DVect2.nil, DVect2.nil => rfl
 | (_::_), (_::_), (_::_), DVect2.cons _ fss, DVect2.cons _ gss => by

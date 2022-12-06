@@ -22,18 +22,21 @@ local infix:50 " ≡ " => DVect2.Eq
 
 namespace Eq
 
+--- `DVect2.Eq` implies `Eq` provided that the dependent parameters are (definitionally) same.
 protected
 theorem eq_of : ∀ {as : List α} {bs : List β} {fs gs : DVect2 γ as bs}, fs ≡ gs → fs = gs
 | [], [], DVect2.nil, DVect2.nil, DVect2.Eq.nil_rfl => rfl
 | (_::_), (_::_), DVect2.cons _ _, DVect2.cons _ _, DVect2.Eq.descend rfl hfsgs =>
   DVect2.Eq.eq_of hfsgs ▸ rfl
 
+--- `DVect2.Eq` from `Eq`
 protected
 theorem of : ∀ {as : List α} {bs : List β} {fs gs : DVect2 γ as bs}, fs = gs → fs ≡ gs
 | [], [], DVect2.nil, _, rfl => DVect2.Eq.nil_rfl
 | (_::_), (_::_), DVect2.cons _ _, _, rfl =>
   DVect2.Eq.descend rfl (Eq.of rfl)
 
+--- `DVect2.Eq` is transitive.
 protected
 theorem trans : ∀ {as₁ as₂ as₃ : List α} {bs₁ bs₂ bs₃ : List β} {fs₁ : DVect2 γ as₁ bs₁} {fs₂ : DVect2 γ as₂ bs₂} {fs₃ : DVect2 γ as₃ bs₃}, fs₁ ≡ fs₂ → fs₂ ≡ fs₃ → fs₁ ≡ fs₃
 | [], [], [], [], [], [], DVect2.nil, DVect2.nil, DVect2.nil, DVect2.Eq.nil_rfl, DVect2.Eq.nil_rfl => DVect2.Eq.nil_rfl
@@ -43,6 +46,7 @@ theorem trans : ∀ {as₁ as₂ as₃ : List α} {bs₁ bs₂ bs₃ : List β} 
 instance instDVect2EqTrans (as₁ as₂ as₃ : List α) (bs₁ bs₂ bs₃ : List β) : Trans (DVect2.Eq (γ:=γ) (as₁:=as₁) (as₂:=as₂) (bs₁:=bs₁) (bs₂:=bs₂)) (DVect2.Eq (as₁:=as₂) (as₂:=as₃) (bs₁:=bs₂) (bs₂:=bs₃)) (DVect2.Eq (as₁:=as₁) (as₂:=as₃) (bs₁:=bs₁) (bs₂:=bs₃)) :=
   Trans.mk DVect2.Eq.trans
 
+--- `DVect2.Eq` is symmetric
 protected
 theorem symm : ∀ {as₁ as₂ : List α} {bs₁ bs₂ : List β} {fs₁ : DVect2 γ as₁ bs₁} {fs₂ : DVect2 γ as₂ bs₂}, fs₁ ≡ fs₂ → fs₂ ≡ fs₁
 | [], [], [], [], DVect2.nil, DVect2.nil, DVect2.Eq.nil_rfl => DVect2.Eq.nil_rfl
@@ -70,6 +74,7 @@ theorem append_assoc : ∀ {as₁ as₂ as₃ : List α} {bs₁ bs₂ bs₃ : Li
   dsimp [HAppend.hAppend, DVect2.append] at *
   exact DVect2.Eq.descend rfl h_ind
 
+--- `DVect2.join` distributes to `DVect2.append`
 theorem join_append {α : Type u₁} {β : Type u₂} {γ : α → β → Type v} : ∀ {ass₁ ass₂ : List (List α)} {bss₁ bss₂ : List (List β)} (fss₁ : DVect2 (DVect2 γ) ass₁ bss₁) (fss₂ : DVect2 (DVect2 γ) ass₂ bss₂), (fss₁ ++ fss₂).join ≡ fss₁.join ++ fss₂.join
 | [], ass₂, [], bss₂, DVect2.nil, fss₂ => DVect2.Eq.of rfl
 | (_::_), ass₂, (_::_), bss₂, DVect2.cons fs₁ fss₁, fss₂ => by
@@ -81,7 +86,7 @@ theorem join_append {α : Type u₁} {β : Type u₂} {γ : α → β → Type v
   case cons _ _ hfs =>
     exact DVect2.Eq.descend rfl hfs
 
--- We get the ordinary equality
+--- `DVect2.fromList` preserves `append` (or `HAppend.hAppend` more precisely).
 theorem fromList_append {α : Type u} {γ : α → α → Type v}: ∀ {as bs : List α} (f : (a : α) → γ a a), fromList γ f (as++bs) = fromList γ f as ++ fromList γ f bs
 | [], bs, f => rfl
 | (a::as), bs, f => by
