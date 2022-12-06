@@ -6,6 +6,8 @@ The goal of this (personal) project is to establish the following goals with [Le
   - [ ] proof of the coherence theorem that every (biased) monoidal category is an instance of an unbiased one;
   - [ ] formalization of so-called "graphical calculus" on (unbiased) monoidal categories.
  
+ The project is released under Apache License (version 2.0); see [LICENSE](LICENSE) file.
+ 
 ## Dependencies
 
 The project heavily depends on [Mathlib4](https://github.com/leanprover-community/mathlib4) project.
