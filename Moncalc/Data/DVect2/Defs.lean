@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2022 Jun Yoshida. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
 universe u u₁ u₂ u₃ u₄ v v₁ v₂
 
 inductive DVect2 {α : Type u₁} {β : Type u₂} (γ : α → β → Type v) : List α → List β → Type _

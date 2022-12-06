@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2022 Jun Yoshida. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
 import Moncalc.Data.List.Misc
 import Moncalc.Data.DVect2.Defs
 
