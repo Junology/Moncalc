@@ -41,7 +41,7 @@ def singletonF {α : Type u} [Category α] : CategoryTheory.Functor α (List α)
   map := λ f => DVect2.cons f DVect2.nil
 
 --- Auxiliary lemma that for every functor `F : α ⥤ β`, the construction `DVect2.map F.obj F.obj F.map : Hom as₁ as₂ → Hom (map F.obj as₁) (map F.obj as₂)` preserves the composition `List.comp`.
-theorem mapF_comp {α : Type u} [Category α] {β : Type v} [Category β] (Φ : CategoryTheory.Functor α β) : ∀ {as bs cs : List α} (fs : Hom as bs) (gs : Hom bs cs), List.comp (DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) fs) (DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) gs) = DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor) (List.comp fs gs)
+theorem mapF_comp {α : Type u} [Category α] {β : Type v} [Category β] (Φ : CategoryTheory.Functor α β) : ∀ {as bs cs : List α} (fs : Hom as bs) (gs : Hom bs cs), List.comp (DVect2.map Φ.obj Φ.obj Φ.map fs) (DVect2.map Φ.obj Φ.obj Φ.map gs) = DVect2.map Φ.obj Φ.obj Φ.map (List.comp fs gs)
 | [], [], [], DVect2.nil, DVect2.nil => rfl
 | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => by
   dsimp [DVect2.map, List.comp]
@@ -50,7 +50,7 @@ theorem mapF_comp {α : Type u} [Category α] {β : Type v} [Category β] (Φ : 
 --- for a given functor `F : α ⥤ β`, `mapF F : List α ⥤ List β` is the functor consisting of `map F.obj` on objects and `DVect2 F.obj F.obj F.map` on morphisms.
 def mapF {α : Type u} {β : Type v} [Category α] [Category β] (Φ : CategoryTheory.Functor α β) : CategoryTheory.Functor (List α) (List β) where
   obj := List.map Φ.obj
-  map := DVect2.map Φ.obj Φ.obj (@Prefunctor.map α _ β _ Φ.toPrefunctor)
+  map := DVect2.map Φ.obj Φ.obj Φ.map
   map_id := by
     intro as
     simp [CategoryStruct.id]
@@ -103,14 +103,12 @@ theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List
 theorem joinF_singletonF_right {α : Type u} [Category α] : mapF singletonF ⋙ joinF = Functor.id (List α) := by
   dsimp [Functor.comp, Functor.id]
   dsimp [singletonF, joinF, mapF, DVect2.join]
-  apply eqF_List
+  apply eqF_List <;> dsimp
   . intro as
-    dsimp
     induction as
     case a.nil => rfl
     case a.cons a as h_ind => dsimp; rw [h_ind]
   . intro as bs fs
-    dsimp
     induction fs
     case a.nil =>
       dsimp [DVect2.map, DVect2.join]
@@ -120,6 +118,11 @@ theorem joinF_singletonF_right {α : Type u} [Category α] : mapF singletonF ⋙
       rw [DVect2.cons_append, DVect2.nil_append]
       exact DVect2.Eq.descend rfl h_ind
 
-theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF = mapF joinF ⋙ joinF := sorry
+--- Two different ways to flatten `List (List (List α))` with the `joinF` functor result in (strictly) the same.
+theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF = mapF joinF ⋙ joinF := by
+  dsimp [Functor.comp, joinF, mapF]
+  apply eqF_List <;> dsimp
+  . intros; exact List.join_join _
+  . intros; exact DVect2.join_join _
 
 end CategoryTheory.List

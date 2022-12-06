@@ -74,8 +74,15 @@ theorem append_assoc : ∀ {as₁ as₂ as₃ : List α} {bs₁ bs₂ bs₃ : Li
   dsimp [HAppend.hAppend, DVect2.append] at *
   exact DVect2.Eq.descend rfl h_ind
 
+--- congruence of `DVect2.append` with respect to `DVect2.Eq`.
+theorem eq_of_eq_append_eq : ∀ {as₁ as₂ as₁' as₂': List α} {bs₁ bs₂ bs₁' bs₂' : List β} {fs₁ : DVect2 γ as₁ bs₁} {fs₂ : DVect2 γ as₂ bs₂} {fs₁' : DVect2 γ as₁' bs₁'} {fs₂' : DVect2 γ as₂' bs₂'}, fs₁ ≡ fs₁' → fs₂ ≡ fs₂' → fs₁ ++ fs₂ ≡ fs₁' ++ fs₂'
+| [], _, [], _, [], _, [], _, DVect2.nil, _, DVect2.nil, _, DVect2.Eq.nil_rfl, hfs₂ =>
+  hfs₂
+| (_::_), _, (_::_), _, (_::_), _, (_::_), _, DVect2.cons _ _, _, DVect2.cons _ _, _, DVect2.Eq.descend hf hfs₁, hfs₂ =>
+  DVect2.Eq.descend hf (eq_of_eq_append_eq hfs₁ hfs₂)
+
 --- `DVect2.join` distributes to `DVect2.append`
-theorem join_append {α : Type u₁} {β : Type u₂} {γ : α → β → Type v} : ∀ {ass₁ ass₂ : List (List α)} {bss₁ bss₂ : List (List β)} (fss₁ : DVect2 (DVect2 γ) ass₁ bss₁) (fss₂ : DVect2 (DVect2 γ) ass₂ bss₂), (fss₁ ++ fss₂).join ≡ fss₁.join ++ fss₂.join
+theorem join_append : ∀ {ass₁ ass₂ : List (List α)} {bss₁ bss₂ : List (List β)} (fss₁ : DVect2 (DVect2 γ) ass₁ bss₁) (fss₂ : DVect2 (DVect2 γ) ass₂ bss₂), (fss₁ ++ fss₂).join ≡ fss₁.join ++ fss₂.join
 | [], ass₂, [], bss₂, DVect2.nil, fss₂ => DVect2.Eq.of rfl
 | (_::_), ass₂, (_::_), bss₂, DVect2.cons fs₁ fss₁, fss₂ => by
   have h_ind := join_append fss₁ fss₂
@@ -85,6 +92,15 @@ theorem join_append {α : Type u₁} {β : Type u₂} {γ : α → β → Type v
   case nil => exact h_ind
   case cons _ _ hfs =>
     exact DVect2.Eq.descend rfl hfs
+
+--- Two different ways to flatten `DVect2 (DVect2 (DVect2 γ))` results in the same.
+theorem join_join : ∀ {asss : List (List (List α))} {bsss : List (List (List β))} (fsss : DVect2 (DVect2 (DVect2 γ)) asss bsss), fsss.join.join ≡ (fsss.map List.join List.join DVect2.join).join
+| [], [], DVect2.nil => DVect2.Eq.nil_rfl
+| (_::_), (_::_), DVect2.cons fs fsss => by
+  dsimp [DVect2.join, DVect2.map]
+  apply DVect2.Eq.trans (DVect2.join_append fs _) _
+  apply eq_of_eq_append_eq (DVect2.Eq.of rfl)
+  exact join_join fsss
 
 --- `DVect2.fromList` preserves `append` (or `HAppend.hAppend` more precisely).
 theorem fromList_append {α : Type u} {γ : α → α → Type v}: ∀ {as bs : List α} (f : (a : α) → γ a a), fromList γ f (as++bs) = fromList γ f as ++ fromList γ f bs

@@ -11,10 +11,10 @@ inductive DVect2 {α : Type u₁} {β : Type u₂} (γ : α → β → Type v) :
 
 namespace DVect2
 
-def map {α₁ : Type u₁} {β₁ : Type u₂} {γ₁ : α₁ → β₁ → Type v₁} {α₂ : Type u₃} {β₂ : Type u₄} {γ₂ : α₂ → β₂ → Type v₂} (f : α₁ → α₂) (g : β₁ → β₂) (h : (a : α₁) → (b : β₁) → γ₁ a b → γ₂ (f a) (g b)) : {as : List α₁} → {bs : List β₁} → DVect2 γ₁ as bs → DVect2 γ₂ (as.map f) (bs.map g)
+def map {α₁ : Type u₁} {β₁ : Type u₂} {γ₁ : α₁ → β₁ → Type v₁} {α₂ : Type u₃} {β₂ : Type u₄} {γ₂ : α₂ → β₂ → Type v₂} (f : α₁ → α₂) (g : β₁ → β₂) (h : {a : α₁} → {b : β₁} → γ₁ a b → γ₂ (f a) (g b)) : {as : List α₁} → {bs : List β₁} → DVect2 γ₁ as bs → DVect2 γ₂ (as.map f) (bs.map g)
 | [], [], DVect2.nil => DVect2.nil
-| (a::_), (b::_), DVect2.cons x xs =>
-  DVect2.cons (h a b x) (map f g h xs)
+| (_::_), (_::_), DVect2.cons x xs =>
+  DVect2.cons (h x) (map f g h xs)
 
 def append {α : Type u₁} {β : Type u₂} {γ : α → β → Type v} : {as₁ as₂ : List α} → {bs₁ bs₂ : List β} → DVect2 γ as₁ bs₁ → DVect2 γ as₂ bs₂ → DVect2 γ (as₁++as₂) (bs₁++bs₂)
 | [], as₂, [], bs₂, _, cs₂ => List.nil_append as₂ ▸ List.nil_append bs₂ ▸ cs₂
