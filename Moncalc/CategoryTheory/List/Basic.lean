@@ -25,7 +25,7 @@ def Hom : List α → (List α) → Type _ :=
 @[reducible]
 protected
 def id : (as : List α) → Hom as as :=
-  DVect2.fromList Quiver.Hom CategoryStruct.id
+  DVect2.fromList (γ:=Quiver.Hom) CategoryStruct.id
 
 -- Due to `Mathlib4` convention, `comp f g` applies `f` "before" `g`.
 protected

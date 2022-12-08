@@ -8,7 +8,7 @@ import Moncalc.Data.DVect2.Defs
 
 namespace DVect2
 
-universe u u₁ u₂ v
+universe u u₁ u₂ v v₁ v₂ w₁ w₂
 
 variable {α : Type u₁} {β : Type u₂} {γ : α → β → Type v}
 
@@ -55,12 +55,24 @@ theorem symm : ∀ {as₁ as₂ : List α} {bs₁ bs₂ : List β} {fs₁ : DVec
 
 end Eq
 
+--- `DVect2.map` preserves the identity map
+theorem map_id : ∀ {as : List α} {bs : List β} {xs : DVect2 γ as bs}, DVect2.map id id id xs ≡ xs
+| [], [], DVect2.nil => DVect2.Eq.nil_rfl
+| (_::_), (_::_), DVect2.cons _ xs => DVect2.Eq.descend rfl (map_id (xs:=xs))
+
+--- `DVect2.map` respects function composition
+theorem map_comp {α₁ α₂ : Type _} {β₁ β₂: Type _} {γ₁ : α₁ → β₁ → Type _} {γ₂ : α₂ → β₂ → Type _} {f₁ : α₁ → α₂} {f : α → α₁} {g₁ : β₁ → β₂} {g : β → β₁} {h₁ : {a₁ : α₁} → {b₁ : β₁} → γ₁ a₁ b₁ → γ₂ (f₁ a₁) (g₁ b₁)} {h : {a : α} → {b : β} → γ a b → γ₁ (f a) (g b)} : ∀ {as : List α} {bs : List β} {xs : DVect2 γ as bs}, DVect2.map (f₁∘ f) (g₁∘ g) (h₁∘ h) xs ≡ DVect2.map f₁ g₁ h₁ (DVect2.map f g h xs)
+| [], [], DVect2.nil => DVect2.Eq.nil_rfl
+| (_::_), (_::_), DVect2.cons _ xs => DVect2.Eq.descend rfl (map_comp (xs:=xs))
+
+--- `DVect2.append` is left unital with respect to `nil`.
 theorem nil_append {as : List α} {bs : List β} (fs : DVect2 γ as bs) : DVect2.nil (γ:=γ) ++ fs = fs :=
   rfl
 
 theorem cons_append {a : α} {b : β} (f : γ a b) {as₁ as₂ : List α} {bs₁ bs₂ : List β} (fs₁ : DVect2 γ as₁ bs₁) (fs₂ : DVect2 γ as₂ bs₂) : DVect2.cons f fs₁ ++ fs₂ = DVect2.cons f (fs₁ ++ fs₂) :=
   rfl
 
+--- `DVect2.append` is right unital with respect to `nil`.
 theorem append_nil : ∀ {as : List α} {bs : List β} (fs : DVect2 γ as bs), fs ++ DVect2.nil (γ:=γ) ≡ fs
 | [], [], DVect2.nil => DVect2.Eq.nil_rfl
 | (_::_), (_::_), DVect2.cons f fs => by
@@ -103,11 +115,20 @@ theorem join_join : ∀ {asss : List (List (List α))} {bsss : List (List (List 
   exact join_join fsss
 
 --- `DVect2.fromList` preserves `append` (or `HAppend.hAppend` more precisely).
-theorem fromList_append {α : Type u} {γ : α → α → Type v}: ∀ {as bs : List α} (f : (a : α) → γ a a), fromList γ f (as++bs) = fromList γ f as ++ fromList γ f bs
-| [], bs, f => rfl
-| (a::as), bs, f => by
+theorem fromList_append {α : Type u} (γ : α → α → Type v) (f : (a : α) → γ a a) : ∀ {as bs : List α}, fromList γ f (as++bs) = fromList γ f as ++ fromList γ f bs
+| [], _ => rfl
+| (_::as), bs => by
   dsimp [fromList]
   rw [cons_append]
-  rw [fromList_append (as:=as) (bs:=bs) f]
+  rw [fromList_append γ f (as:=as) (bs:=bs)]
+
+--- `DVect2.dfromList` preserves `append` (or `HAppend.hAppend` more precisely).
+theorem dfromList_append {α : Type u} {β₁ : Type u₁} {β₂ : Type u₂} {γ : β₁ → β₂ → Type v} (f₁ : α → β₁) (f₂ : α → β₂) (g : (a : α) → γ (f₁ a) (f₂ a)) : ∀ {as bs : List α}, dfromList f₁ f₂ g (as++bs) ≡ dfromList f₁ f₂ g as ++ dfromList f₁ f₂ g bs
+| [], bs => DVect2.Eq.of rfl
+| (a::as), bs => by
+  dsimp [dfromList]
+  rw [cons_append]
+  apply DVect2.Eq.descend rfl
+  exact dfromList_append f₁ f₂ g (as:=as) (bs:=bs)
 
 end DVect2

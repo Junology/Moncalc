@@ -5,7 +5,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 namespace List
 
-universe u
+universe u v w
+
+theorem map_comp {α : Type u} {β : Type v} {γ : Type w} (g : β → γ) (f : α → β) : ∀ {as : List α}, map (g∘ f) as = map g (as.map f) := by
+  intro as
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp [map]
+    rw [h_ind]
 
 theorem join_append {α : Type u} : ∀ (ass bss : List (List α)), (ass ++ bss).join = ass.join ++ bss.join
 | [], bss => rfl

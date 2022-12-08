@@ -31,5 +31,9 @@ def fromList {α : Type u} (γ : α → α → Type v) (f : (a : α) → γ a a)
 | [] => DVect2.nil
 | (a::as) => DVect2.cons (f a) (fromList γ f as)
 
+def dfromList {α : Type u} {β₁ : Type u₁} {β₂ : Type u₂} {γ : β₁ → β₂ → Type v} (f₁ : α → β₁) (f₂ : α → β₂) (g : (a : α) → γ (f₁ a) (f₂ a)) : (as : List α) → DVect2 γ (as.map f₁) (as.map f₂)
+| [] => DVect2.nil
+| (a::as) => DVect2.cons (g a) (dfromList f₁ f₂ g as)
+
 end DVect2
 
