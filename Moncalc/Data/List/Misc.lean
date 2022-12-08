@@ -3,6 +3,8 @@ Copyright (c) 2022 Jun Yoshida. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
+import Mathlib.Data.List.Basic
+
 namespace List
 
 universe u v w
@@ -26,5 +28,11 @@ theorem join_join {α : Type u} : ∀ (asss : List (List (List α))), asss.join.
 | cons as asss => by
   dsimp [join]
   rw [join_append, join_join asss]
+
+theorem map_join {α : Type u} {β : Type v} (f : α → β) : ∀ {ass : List (List α)}, map f ass.join = join (map (map f) ass)
+| [] => rfl
+| (as::ass) => by
+  dsimp [join]
+  rw [map_append, map_join f (ass:=ass)]
 
 end List

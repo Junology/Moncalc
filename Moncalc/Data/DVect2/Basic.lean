@@ -93,6 +93,13 @@ theorem eq_of_eq_append_eq : ∀ {as₁ as₂ as₁' as₂': List α} {bs₁ bs�
 | (_::_), _, (_::_), _, (_::_), _, (_::_), _, DVect2.cons _ _, _, DVect2.cons _ _, _, DVect2.Eq.descend hf hfs₁, hfs₂ =>
   DVect2.Eq.descend hf (eq_of_eq_append_eq hfs₁ hfs₂)
 
+theorem map_append {α₁ β₁: Type _} {γ₁ : α₁ → β₁ → Type _} (f : α → α₁) (g : β → β₁) (h : {a : α} → {b : β} → γ a b → γ₁ (f a) (g b)) : ∀ {as₁ as₂ : List α} {bs₁ bs₂ : List β} {xs₁ : DVect2 γ as₁ bs₁} {xs₂ : DVect2 γ as₂ bs₂}, DVect2.map f g h (xs₁ ++ xs₂) ≡ DVect2.map f g h xs₁ ++ DVect2.map f g h xs₂
+| [], _, [], _, DVect2.nil, _ => DVect2.Eq.of rfl
+| (_::_), _, (_::_), _, DVect2.cons _ xs₁, xs₂ => by
+  dsimp [map]
+  apply DVect2.Eq.descend rfl
+  exact map_append f g h (xs₁:=xs₁) (xs₂:=xs₂)
+
 --- `DVect2.join` distributes to `DVect2.append`
 theorem join_append : ∀ {ass₁ ass₂ : List (List α)} {bss₁ bss₂ : List (List β)} (fss₁ : DVect2 (DVect2 γ) ass₁ bss₁) (fss₂ : DVect2 (DVect2 γ) ass₂ bss₂), (fss₁ ++ fss₂).join ≡ fss₁.join ++ fss₂.join
 | [], ass₂, [], bss₂, DVect2.nil, fss₂ => DVect2.Eq.of rfl

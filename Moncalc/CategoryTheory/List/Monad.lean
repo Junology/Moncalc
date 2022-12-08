@@ -193,4 +193,18 @@ theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF 
   . intros; exact List.join_join _
   . intros; exact DVect2.join_join _
 
+theorem comp_joinF_mapF {α : Type u} [Category α] {β : Type v} [Category β] (F : Functor α β) : joinF ⋙ mapF F = mapF (mapF F) ⋙ joinF := by
+  dsimp [Functor.comp, joinF, mapF]
+  apply eqF_List <;> dsimp
+  . intro ass
+    rw [List.map_join]
+  . intros ass₁ ass₂ fss
+    induction fss
+    case a.nil => exact DVect2.Eq.nil_rfl
+    case a.cons fs fss h_ind =>
+      dsimp [DVect2.join, DVect2.map]
+      apply DVect2.Eq.trans (DVect2.map_append _ _ _)
+      apply DVect2.eq_of_eq_append_eq (DVect2.Eq.of rfl)
+      exact h_ind
+
 end CategoryTheory.List
