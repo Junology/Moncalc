@@ -19,11 +19,6 @@ namespace CategoryTheory
 
 universe u
 
-#print Functor.comp
-example {α β γ δ : Type _} [Category α] [Category β] [Category γ] [Category δ] (F : Functor α β) (G : Functor β γ) (H : Functor γ δ) : Functor.comp (Functor.comp F G) H = F ⋙ (G ⋙ H) := by
-  unfold Functor.comp
-  rfl
-
 set_option autoImplicit false
 
 class LaxMonoidal (α : Type u) extends Category α where
