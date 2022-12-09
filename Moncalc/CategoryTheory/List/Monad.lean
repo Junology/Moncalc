@@ -155,6 +155,8 @@ theorem mapNT_vcomp {α : Type u} [Category α] {β : Type v} [Category β] {F G
   As our "associator" `mapF_Fcomp : mapF (F ⋙ G) = mapF F ⋙ mapF G` is only a propositional equality, not the definitional one, we need some tricks even to state it.
 -/
 
+theorem whisker_singletonF {α : Type u} [Category α] {β :Type v} [Category β] (F : Functor α β) : F ⋙ singletonF = singletonF ⋙ mapF F := rfl
+
 --- Left unitality of `List` with respect to `joinF` as multiplication and `singletonF` as unit.
 theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List α) ⋙ joinF = Functor.id (List α) := by
   dsimp [Functor.comp, Functor.id]
@@ -193,6 +195,7 @@ theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF 
   . intros; exact List.join_join _
   . intros; exact DVect2.join_join _
 
+--- `joinF` is a 2-natural transformation
 theorem comp_joinF_mapF {α : Type u} [Category α] {β : Type v} [Category β] (F : Functor α β) : joinF ⋙ mapF F = mapF (mapF F) ⋙ joinF := by
   dsimp [Functor.comp, joinF, mapF]
   apply eqF_List <;> dsimp
