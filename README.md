@@ -2,7 +2,7 @@
 
 The goal of this (personal) project is to establish the following goals with [Lean 4](https://github.com/leanprover/lean4):
 
-  - [ ] implementation of unbiased monoidal categories;
+  - [X] implementation of unbiased monoidal categories;
   - [ ] proof of the coherence theorem that every (biased) monoidal category is an instance of an unbiased one;
   - [ ] formalization of so-called "graphical calculus" on (unbiased) monoidal categories.
  
