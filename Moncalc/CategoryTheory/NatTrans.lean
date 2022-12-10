@@ -24,7 +24,7 @@ end NatTrans
 namespace NatIso
 
 protected
-def OfEq {α : Type u} [Category α] {β : Type v} [Category β] : ∀ {F G : Functor α β}, F = G → (F ≅ G)
+def ofEq {α : Type u} [Category α] {β : Type v} [Category β] : ∀ {F G : Functor α β}, F = G → (F ≅ G)
 | F, _, rfl => Iso.refl F
 
 end NatIso
