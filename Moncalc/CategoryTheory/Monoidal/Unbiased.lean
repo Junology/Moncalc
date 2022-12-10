@@ -12,6 +12,7 @@ import Mathlib.CategoryTheory.NatIso
 import Moncalc.CategoryTheory.Whiskering
 
 import Moncalc.CategoryTheory.List.Basic
+import Moncalc.CategoryTheory.List.Functor
 import Moncalc.CategoryTheory.List.Monad
 import Moncalc.CategoryTheory.NatTrans
 
@@ -24,13 +25,13 @@ set_option autoImplicit false
 class LaxMonoidal (α : Type u) extends Category α where
   tensor : Functor (List α) α
   unitor : NatTrans (𝟭 α) (List.singletonF ⋙ tensor)
-  associator : NatTrans (List.mapF tensor ⋙ tensor) (List.joinF ⋙ tensor)
+  associator : NatTrans (List.mapF.obj tensor ⋙ tensor) (List.joinF ⋙ tensor)
   -- Two paths `𝟭 _ ⋙ tensor ⟶ tensor` must agree with each other
   coherence_unit_right :
-    whiskerRight (NatTrans.ofEq List.mapF_id.symm) tensor
-      ≫ whiskerRight (List.mapNT unitor) tensor
-      ≫ whiskerRight (NatTrans.ofEq (List.mapF_Fcomp List.singletonF tensor)) tensor
-      ≫ whiskerLeft (List.mapF List.singletonF) associator
+    whiskerRight (List.mapF.unitor.hom) tensor
+      ≫ whiskerRight (List.mapF.map unitor) tensor
+      ≫ whiskerRight (List.mapF.compositor List.singletonF tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj List.singletonF) associator
       ≫ whiskerRight (NatTrans.ofEq (List.joinF_singletonF_right)) tensor
     = NatTrans.id tensor
   --- Two paths `tensor ⋙ 𝟭 _ ⟶ tensor` must agree with each other
@@ -41,26 +42,26 @@ class LaxMonoidal (α : Type u) extends Category α where
     = NatTrans.id tensor
   -- Two paths `List.mapF (List.mapF tensor ⋙ tensor) ⋙ tensor ⟶ List.joinF ⋙ List.joinF ⋙ tensor` must agree with each other.
   coherence_assoc :
-    whiskerRight (NatTrans.ofEq (List.mapF_Fcomp (List.mapF tensor) tensor)) tensor
-      ≫ whiskerLeft (List.mapF (List.mapF tensor)) associator
+    whiskerRight (List.mapF.compositor (List.mapF.obj tensor) tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj (List.mapF.obj tensor)) associator
       ≫ whiskerRight (NatTrans.ofEq (List.comp_joinF_mapF tensor).symm) tensor
       ≫ whiskerLeft List.joinF associator
     =
-    whiskerRight (List.mapNT associator) tensor
-      ≫ whiskerRight (NatTrans.ofEq (List.mapF_Fcomp List.joinF tensor)) tensor
-      ≫ whiskerLeft (List.mapF List.joinF) associator
+    whiskerRight (List.mapF.map associator) tensor
+      ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj List.joinF) associator
       ≫ whiskerRight (NatTrans.ofEq (List.joinF_assoc).symm) _
 
 class UnbiasedMonoidal (α : Type u) extends Category α where
   tensor : Functor (List α) α
   unitor : 𝟭 α ≅ List.singletonF ⋙ tensor
-  associator : List.mapF tensor ⋙ tensor ≅ List.joinF ⋙ tensor
+  associator : List.mapF.obj tensor ⋙ tensor ≅ List.joinF ⋙ tensor
   -- Two paths `𝟭 _ ⋙ tensor ⟶ tensor` must agree with each other
   coherence_unit_right :
-    whiskerRight (NatTrans.ofEq List.mapF_id.symm) tensor
-      ≫ whiskerRight (List.mapNT unitor.hom) tensor
-      ≫ whiskerRight (NatTrans.ofEq (List.mapF_Fcomp List.singletonF tensor)) tensor
-      ≫ whiskerLeft (List.mapF List.singletonF) associator.hom
+    whiskerRight List.mapF.unitor.hom tensor
+      ≫ whiskerRight (List.mapF.map unitor.hom) tensor
+      ≫ whiskerRight (List.mapF.compositor List.singletonF tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj List.singletonF) associator.hom
       ≫ whiskerRight (NatTrans.ofEq (List.joinF_singletonF_right)) tensor
     = NatTrans.id tensor
   --- Two paths `tensor ⋙ 𝟭 _ ⟶ tensor` must agree with each other
@@ -71,14 +72,14 @@ class UnbiasedMonoidal (α : Type u) extends Category α where
     = NatTrans.id tensor
   -- Two paths `List.mapF (List.mapF tensor ⋙ tensor) ⋙ tensor ⟶ List.joinF ⋙ List.joinF ⋙ tensor` must agree with each other.
   coherence_assoc :
-    whiskerRight (NatTrans.ofEq (List.mapF_Fcomp (List.mapF tensor) tensor)) tensor
-      ≫ whiskerLeft (List.mapF (List.mapF tensor)) associator.hom
+    whiskerRight (List.mapF.compositor (List.mapF.obj tensor) tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj (List.mapF.obj tensor)) associator.hom
       ≫ whiskerRight (NatTrans.ofEq (List.comp_joinF_mapF tensor).symm) tensor
       ≫ whiskerLeft List.joinF associator.hom
     =
-    whiskerRight (List.mapNT associator.hom) tensor
-      ≫ whiskerRight (NatTrans.ofEq (List.mapF_Fcomp List.joinF tensor)) tensor
-      ≫ whiskerLeft (List.mapF List.joinF) associator.hom
+    whiskerRight (List.mapF.map associator.hom) tensor
+      ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
+      ≫ whiskerLeft (List.mapF.obj List.joinF) associator.hom
       ≫ whiskerRight (NatTrans.ofEq (List.joinF_assoc).symm) _
 
 instance LaxMonoidalOfUnbiased (α : Type u) [UnbiasedMonoidal α] : LaxMonoidal α where
@@ -88,5 +89,24 @@ instance LaxMonoidalOfUnbiased (α : Type u) [UnbiasedMonoidal α] : LaxMonoidal
   coherence_unit_right := UnbiasedMonoidal.coherence_unit_right
   coherence_unit_left := UnbiasedMonoidal.coherence_unit_left
   coherence_assoc := UnbiasedMonoidal.coherence_assoc
+
+instance instUnbiasedMonoidalList (α : Type u) [Category α] : UnbiasedMonoidal (List α) where
+  tensor := List.joinF
+  unitor := NatIso.ofEq (List.joinF_singletonF_left).symm
+  associator := NatIso.ofEq (List.joinF_assoc).symm
+  coherence_unit_left := by
+    ext ass
+    simp [whiskerLeft, whiskerRight, Functor.comp]
+    simp [List.joinF, List.singletonF]
+    induction ass
+    case nil =>
+      simp [DVect2.join]
+      unfold DVect2.join
+      sorry
+    sorry
+  coherence_unit_right := by
+    sorry
+  coherence_assoc := by
+    sorry
 
 end CategoryTheory
