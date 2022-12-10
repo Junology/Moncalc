@@ -9,9 +9,22 @@ import Mathlib.CategoryTheory.Functor.Basic
 import Moncalc.Data.DVect2.Defs
 import Moncalc.Data.DVect2.Basic
 
+/-!
+# Category structure on `List`
+
+We show that `List α` admits a canonical structure of a category provided `Category α`
+-/
+
 namespace CategoryTheory.List
 
 universe u v
+
+
+/-!
+## Definition of the structure
+-/
+section Category
+
 variable {α : Type u} [Category α]
 
 /--
@@ -34,7 +47,7 @@ def comp : {as bs cs : List α} → Hom as bs → Hom bs cs → Hom as cs
 | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => DVect2.cons (f ≫ g) (List.comp fs gs)
 
 /-!
-## Lemmas for recursion
+### Lemmas for recursion
 -/
 @[simp]
 protected
@@ -52,11 +65,6 @@ theorem comp_nil' : List.comp (α:=α) DVect2.nil DVect2.nil = DVect2.nil := rfl
 protected
 theorem comp_cons' : ∀ {a b c : α} {as bs cs : List α} {f : Quiver.Hom a b} {fs : Hom as bs} {g : Quiver.Hom b c} {gs : Hom bs cs}, List.comp (DVect2.cons f fs) (DVect2.cons g gs) = DVect2.cons (f ≫ g) (List.comp fs gs) := by
   intros; rfl
-
-
-/-!
-## Instance of `Category (List α)`
--/
 
 --- Right unitality of the composition in `List α`; see the comment on `comp` function for the composition order.
 protected
@@ -93,7 +101,7 @@ instance instCategoryList : CategoryTheory.Category (List α) where
 
 
 /-!
-## Lemmas for recursion that do not destruct the `CategoryTheory` notations
+### Lemmas for recursion that do not destruct the `CategoryTheory` notations
 -/
 
 @[simp]
@@ -110,34 +118,50 @@ theorem comp_nil : CategoryStruct.comp (obj:=List α) (X:=[]) (Y:=[]) (Z:=[]) DV
 @[simp]
 theorem comp_cons : ∀ {a b c : α} {as bs cs : List α} {f : a ⟶ b} {fs : as ⟶ bs} {g : b ⟶ c} {gs : bs ⟶ cs}, CategoryStruct.comp (obj:=List α) (X:=a::as) (Y:=b::bs) (Z:=c::cs) (DVect2.cons f fs) (DVect2.cons g gs) = DVect2.cons (f ≫ g) (fs ≫ gs) := rfl
 
+end Category
+
+
+/-!
+## Functorial `append`/`hAppend`
+-/
+namespace appendF
+
+/--
+  `DVect2.append` enables `Hom as₁ bs₁ → Hom as₂ bs₂ → Hom (as₁++as₂) (bs₁++bs₂)` for `as₁ as₂ bs₁ bs₂ : List α`. 
+-/
+instance instHAppendHom (α : Type u) [Category α] {as₁ as₂ bs₁ bs₂ : List α} : HAppend (as₁ ⟶ bs₁) (as₂ ⟶ bs₂) ((as₁++as₂) ⟶ (bs₁++bs₂)) :=
+  inferInstanceAs $ HAppend (DVect2 (Quiver.Hom (V:=α)) as₁ bs₁) (DVect2 (Quiver.Hom (V:=α)) as₂ bs₂) _
+
+variable {α : Type u} [Category α]
+
+@[simp]
+protected
+lemma map_cons {a b : α} {as₁ as₂ bs₁ bs₂ : List α} (f : a ⟶ b) (fs₁ : as₁ ⟶ bs₁) (fs₂ : as₂ ⟶ bs₂) : HAppend.hAppend (α:=(a::as₁) ⟶ (b::bs₁)) (DVect2.cons f fs₁) fs₂ = DVect2.cons f (fs₁ ++ fs₂) := rfl
+
+@[simp]
+protected
+theorem map_id {as bs : List α} : 𝟙 as ++ 𝟙 bs = 𝟙 (as++bs) := by
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp
+    rw [DVect2.cons_append, h_ind]
+
+@[simp]
+protected
+theorem map_comp : ∀ {as₁ as₂ bs₁ bs₂ cs₁ cs₂ : List α} (fs₁ : Hom as₁ bs₁) (fs₂ : Hom as₂ bs₂) (gs₁ : Hom bs₁ cs₁) (gs₂ : Hom bs₂ cs₂), (fs₁ ++ fs₂) ≫ (gs₁ ++ gs₂) = HAppend.hAppend (self:=instHAppendHom α) (fs₁ ≫ gs₁) (fs₂ ≫ gs₂)
+| [], _, [], _, [], _, DVect2.nil, _, DVect2.nil, _ => rfl
+| (_::_), _, (_::_), _, (_::_), _, DVect2.cons f fs₁, fs₂, DVect2.cons g gs₁, gs₂ => by
+  rw [DVect2.cons_append, DVect2.cons_append]
+  dsimp
+  rw [appendF.map_comp fs₁ _ gs₁ _, DVect2.cons_append]
+
+end appendF
+
 
 /-!
 ## Misceleneous lemmas
 -/
-
-/--
-  `DVect2.append` enables `Hom as₁ bs₁ → Hom as₂ bs₂ → Hom (as₁++as₂) (bs₁++bs₂)` for `as₁ as₂ bs₁ bs₂ : List α`. 
-  `comp_append` states the functoriality of this construction.
--/
-theorem comp_append : ∀ {as₁ as₂ bs₁ bs₂ cs₁ cs₂: List α} (fs₁ : Hom as₁ bs₁) (fs₂ : Hom as₂ bs₂) (gs₁ : Hom bs₁ cs₁) (gs₂ : Hom bs₂ cs₂), List.comp (fs₁ ++ fs₂) (gs₁ ++ gs₂) = List.comp fs₁ gs₁ ++ List.comp fs₂ gs₂
-| [], _, [], _, [], _, DVect2.nil, _, DVect2.nil, _ => rfl
-| (_::_), _, (_::_), _, (_::_), _, DVect2.cons _ fs₁, fs₂, DVect2.cons _ gs₁, gs₂ => by
-  have h_ind := comp_append fs₁ fs₂ gs₁ gs₂
-  rw [DVect2.cons_append]
-  dsimp [List.comp, HAppend.hAppend, DVect2.append] at *
-  rw [h_ind]
-
-/--
-  `DVect2.join` enables `Hom ass bss → Hom ass.join bss.join` for `ass bss : List (List α)`.
-  `comp_join` states the functoriality of this construction.
--/
-theorem comp_join : ∀ {ass bss css : List (List α)} (fss : Hom ass bss) (gss : Hom bss css), List.comp fss.join gss.join = DVect2.join (List.comp fss gss)
-| [], [], [], DVect2.nil, DVect2.nil => rfl
-| (_::_), (_::_), (_::_), DVect2.cons _ fss, DVect2.cons _ gss => by
-  dsimp [DVect2.join]
-  rw [comp_append]
-  rw [comp_join fss gss]
-  rfl
 
 --- Functional extensionality for functors into `List α`
 theorem eqF_List {α : Type u} [Category α] {β : Type v} [Category β] : (F G : Functor α (List β)) → (∀ (a : α), F.obj a = G.obj a) → (∀ (a₁ a₂ : α) (f : a₁ ⟶ a₂), DVect2.Eq (F.map f) (G.map f)) → F = G

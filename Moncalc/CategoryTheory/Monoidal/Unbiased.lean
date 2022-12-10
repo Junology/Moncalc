@@ -44,7 +44,7 @@ class LaxMonoidal (α : Type u) extends Category α where
   coherence_assoc :
     whiskerRight (List.mapF.compositor (List.mapF.obj tensor) tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj (List.mapF.obj tensor)) associator
-      ≫ whiskerRight (NatTrans.ofEq (List.comp_joinF_mapF tensor).symm) tensor
+      ≫ whiskerRight (List.joinF.naturator tensor).inv tensor
       ≫ whiskerLeft List.joinF associator
     =
     whiskerRight (List.mapF.map associator) tensor
@@ -74,7 +74,7 @@ class UnbiasedMonoidal (α : Type u) extends Category α where
   coherence_assoc :
     whiskerRight (List.mapF.compositor (List.mapF.obj tensor) tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj (List.mapF.obj tensor)) associator.hom
-      ≫ whiskerRight (NatTrans.ofEq (List.comp_joinF_mapF tensor).symm) tensor
+      ≫ whiskerRight (List.joinF.naturator tensor).inv tensor
       ≫ whiskerLeft List.joinF associator.hom
     =
     whiskerRight (List.mapF.map associator.hom) tensor
