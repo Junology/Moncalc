@@ -66,9 +66,11 @@ theorem map_comp {α₁ α₂ : Type _} {β₁ β₂: Type _} {γ₁ : α₁ →
 | (_::_), (_::_), DVect2.cons _ xs => DVect2.Eq.descend rfl (map_comp (xs:=xs))
 
 --- `DVect2.append` is left unital with respect to `nil`.
+@[simp]
 theorem nil_append {as : List α} {bs : List β} (fs : DVect2 γ as bs) : DVect2.nil (γ:=γ) ++ fs = fs :=
   rfl
 
+@[simp]
 theorem cons_append {a : α} {b : β} (f : γ a b) {as₁ as₂ : List α} {bs₁ bs₂ : List β} (fs₁ : DVect2 γ as₁ bs₁) (fs₂ : DVect2 γ as₂ bs₂) : DVect2.cons f fs₁ ++ fs₂ = DVect2.cons f (fs₁ ++ fs₂) :=
   rfl
 
