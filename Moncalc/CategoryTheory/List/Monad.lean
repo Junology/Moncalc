@@ -272,6 +272,7 @@ end naturality
 
 end joinF
 
+
 /-!
 ## `List.singletonF` the embedding of a category `α` into `List α`
 -/
@@ -281,15 +282,33 @@ def singletonF {α : Type u} [Category α] : Functor α (List α) where
   obj := λ a => [a]
   map := λ f => DVect2.cons f DVect2.nil
 
+namespace singletonF
 
-/-
-  2-functoriality and 2-monad laws
+variable {α : Type u} [Category α] {β : Type v} [Category β] (F : Functor α β)
+
+--- 2-naturality as equality
+protected
+theorem naturality : singletonF ⋙ mapF.obj F = F ⋙ singletonF := rfl
+
+protected
+def naturator : singletonF ⋙ mapF.obj F ≅ F ⋙ singletonF :=
+  Iso.refl _
+
+end singletonF
+
+
+/-!
+## 2-monad structure
 -/
 
-theorem whisker_singletonF {α : Type u} [Category α] {β :Type v} [Category β] (F : Functor α β) : F ⋙ singletonF = singletonF ⋙ mapF.obj F := rfl
+namespace joinF
 
---- Left unitality of `List` with respect to `joinF` as multiplication and `singletonF` as unit.
-theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List α) ⋙ joinF = Functor.id (List α) := by
+variable {α : Type u} [Category α]
+
+--- Left unitality of `List.joinF` with respect to `List.singletonF` as an equality.
+@[simp]
+protected
+theorem unit_left : singletonF (α:=List α) ⋙ joinF = 𝟭 (List α) := by
   dsimp [Functor.comp, Functor.id]
   dsimp [singletonF, joinF, DVect2.join]
   apply eqF_List
@@ -300,8 +319,10 @@ theorem joinF_singletonF_left {α : Type u} [Category α] : singletonF (α:=List
     dsimp
     exact DVect2.append_nil _
 
---- Right unitality of `List` with respect to `joinF` as multiplication and `singletonF` as unit.
-theorem joinF_singletonF_right {α : Type u} [Category α] : mapF.obj singletonF ⋙ joinF = Functor.id (List α) := by
+--- Right unitality of `List.joinF` with respect to `List.singletonF` as an equality.
+@[simp]
+protected
+theorem unit_right : mapF.obj singletonF ⋙ joinF = Functor.id (List α) := by
   dsimp [Functor.comp, Functor.id]
   dsimp [singletonF, joinF, mapF, DVect2.join]
   apply eqF_List <;> dsimp
@@ -320,25 +341,75 @@ theorem joinF_singletonF_right {α : Type u} [Category α] : mapF.obj singletonF
       exact DVect2.Eq.descend rfl h_ind
 
 --- Two different ways to flatten `List (List (List α))` with the `joinF` functor result in (strictly) the same.
-theorem joinF_assoc {α : Type u} [Category α] : joinF (α:=List α) ⋙ joinF = mapF.obj joinF ⋙ joinF := by
+protected
+theorem assoc : joinF (α:=List α) ⋙ joinF = mapF.obj joinF ⋙ joinF := by
   dsimp [Functor.comp, joinF, mapF]
   apply eqF_List <;> dsimp
   . intros; exact List.join_join _
   . intros; exact DVect2.join_join _
 
---- `joinF` is a 2-natural transformation
-theorem comp_joinF_mapF {α : Type u} [Category α] {β : Type v} [Category β] (F : Functor α β) : joinF ⋙ mapF.obj F = mapF.obj (mapF.obj F) ⋙ joinF := by
-  dsimp [Functor.comp, joinF, mapF]
-  apply eqF_List <;> dsimp
-  . intro ass
-    rw [List.map_join]
-  . intros ass₁ ass₂ fss
-    induction fss
-    case a.nil => exact DVect2.Eq.nil_rfl
-    case a.cons fs fss h_ind =>
-      dsimp [DVect2.join, DVect2.map]
-      apply DVect2.Eq.trans (DVect2.map_append _ _ _)
-      apply DVect2.eq_of_eq_append_eq (DVect2.Eq.of rfl)
-      exact h_ind
+protected
+def unitorLeftLax : (as : List α) → (as ⟶ ((singletonF (α:=List α) ⋙ joinF).obj as))
+| [] => 𝟙 []
+| (a::as) => DVect2.cons (𝟙 a) (joinF.unitorLeftLax as)
+
+protected
+def unitorLeftOplax : (as : List α) → (((singletonF (α:=List α) ⋙ joinF).obj as) ⟶ as)
+| [] => 𝟙 []
+| (a::as) => DVect2.cons (𝟙 a) (joinF.unitorLeftOplax as)
+
+@[simp]
+protected
+lemma unitorLeft_lax_oplax (as : List α) : joinF.unitorLeftLax as ≫ joinF.unitorLeftOplax as = 𝟙 as := by
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp [joinF.unitorLeftLax, joinF.unitorLeftOplax]
+    rw [h_ind, Category.id_comp]
+
+@[simp]
+protected
+lemma unitorLeft_oplax_lax (as : List α) : joinF.unitorLeftOplax as ≫ joinF.unitorLeftLax as = 𝟙 _ := by
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp [joinF.unitorLeftLax, joinF.unitorLeftOplax]
+    rw [h_ind, Category.id_comp]
+    rfl
+
+--- Left unitality of `List.joinF` with respect to `List.singletonF` as a natural isomorphism
+protected
+def unitorLeft : 𝟭 (List α) ≅ singletonF (α:=List α) ⋙ joinF where
+  hom := {
+    app := joinF.unitorLeftLax
+    naturality := by
+      intro _ _ fs
+      dsimp [Functor.id]
+      induction fs
+      case nil => rfl
+      case cons f fs h_ind =>
+        dsimp [joinF.unitorLeftLax, joinF.unitorLeftOplax]
+        rw [Category.comp_id, h_ind]
+        dsimp [singletonF, joinF, DVect2.join]
+        rw [DVect2.cons_append, comp_cons, Category.id_comp]
+  }
+  inv := {
+    app := joinF.unitorLeftOplax
+    naturality := by
+      intro _ _ fs
+      dsimp [Functor.id]
+      induction fs
+      case nil => rfl
+      case cons f fs h_ind =>
+        dsimp [joinF.unitorLeftLax, joinF.unitorLeftOplax]
+        dsimp [singletonF, joinF, DVect2.join] at *
+        rw [DVect2.cons_append, comp_cons, Category.id_comp, Category.comp_id]
+        rw [h_ind]
+  }
+  hom_inv_id := by ext; intros; simp
+  inv_hom_id := by ext; intros; simp
+
+
+end joinF
 
 end CategoryTheory.List
