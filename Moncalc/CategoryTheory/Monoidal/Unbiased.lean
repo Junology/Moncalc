@@ -50,7 +50,7 @@ class LaxMonoidal (α : Type u) extends Category α where
     whiskerRight (List.mapF.map associator) tensor
       ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj List.joinF) associator
-      ≫ whiskerRight (NatTrans.ofEq (List.joinF.assoc).symm) _
+      ≫ whiskerRight List.joinF.associator.inv _
 
 class UnbiasedMonoidal (α : Type u) extends Category α where
   tensor : Functor (List α) α
@@ -80,7 +80,7 @@ class UnbiasedMonoidal (α : Type u) extends Category α where
     whiskerRight (List.mapF.map associator.hom) tensor
       ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj List.joinF) associator.hom
-      ≫ whiskerRight (NatTrans.ofEq (List.joinF.assoc).symm) _
+      ≫ whiskerRight List.joinF.associator.inv _
 
 instance LaxMonoidalOfUnbiased (α : Type u) [UnbiasedMonoidal α] : LaxMonoidal α where
   tensor := UnbiasedMonoidal.tensor

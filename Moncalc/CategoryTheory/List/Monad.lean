@@ -443,20 +443,174 @@ def unitorRight : 𝟭 (List α) ≅ mapF.obj (singletonF (α:=α)) ⋙ joinF wh
   hom_inv_id := by ext; intros; simp
   inv_hom_id := by ext; intros; simp
 
-set_option autoImplicit false
-
---- `joinF` is a monoidal functor
+@[irreducible]
 protected
-def tensoratorLax : (ass bss : List (List α)) → (((joinF (α:=α)).obj ass ++ (joinF (α:=α).obj bss)) ⟶ (joinF.obj (ass++bss)))
-| [], bss => 𝟙 ((joinF (α:=α)).obj bss)
-| (as::ass), bss => sorry
+def associatorLeft : (asss : List (List (List α))) → ((mapF.obj (joinF (α:=α)) ⋙ joinF).obj asss ⟶ (joinF (α:=List α) ⋙ joinF).obj asss) :=
+  let rec aux : (as : List α) → (ass : List (List α)) → (asss : List (List (List α))) → ((mapF.obj (joinF (α:=α)) ⋙ joinF).obj ((as::ass)::asss) ⟶ (joinF (α:=List α) ⋙ joinF).obj ((as::ass)::asss))
+  | [], [], [] => 𝟙 []
+  | [], [], (ass::asss) => aux [] ass asss
+  | [], (as::ass), asss => aux as ass asss
+  | (a::as), ass, asss => DVect2.cons (𝟙 a) (aux as ass asss)
+  aux [] []
+termination_by aux as ass asss => (asss.length, ass.length, as.length)
+
+@[simp]
+protected
+lemma associatorLeft_nil : joinF.associatorLeft (α:=α) [] = 𝟙 [] :=
+  by unfold joinF.associatorLeft; rfl
+
+@[simp]
+protected
+lemma associatorLeft_cons_nil {asss : List (List (List α))} : joinF.associatorLeft ([]::asss) = joinF.associatorLeft asss :=
+  by unfold joinF.associatorLeft; rfl
+
+@[simp]
+protected
+lemma associatorLeft_cons_cons_nil {ass : List (List α)} {asss : List (List (List α))} : joinF.associatorLeft (([]::ass)::asss) = joinF.associatorLeft (ass::asss) :=
+by
+  unfold joinF.associatorLeft
+  conv => lhs; unfold associatorLeft.aux; unfold associatorLeft.aux
+
+@[simp]
+protected
+lemma associatorLeft_cons_cons_cons {a : α} {as : List α} {ass : List (List α)} {asss : List (List (List α))} : joinF.associatorLeft (((a::as)::ass)::asss) = DVect2.cons (𝟙 a) (joinF.associatorLeft ((as::ass)::asss)) := by
+  unfold joinF.associatorLeft
+  unfold joinF.associatorLeft.aux
+  unfold joinF.associatorLeft.aux
+  conv => lhs; unfold joinF.associatorLeft.aux
+
+@[irreducible]
+protected
+def associatorRight : (asss : List (List (List α))) → ((joinF (α:=List α) ⋙ joinF).obj asss ⟶ (mapF.obj (joinF (α:=α)) ⋙ joinF).obj asss) :=
+  let rec aux : (as : List α) → (ass : List (List α)) → (asss : List (List (List α))) → ((joinF (α:=List α) ⋙ joinF).obj ((as::ass)::asss) ⟶ (mapF.obj (joinF (α:=α)) ⋙ joinF).obj ((as::ass)::asss))
+  | [], [], [] => 𝟙 []
+  | [], [], (ass::asss) => aux [] ass asss
+  | [], (as::ass), asss => aux as ass asss
+  | (a::as), ass, asss => DVect2.cons (𝟙 a) (aux as ass asss)
+  aux [] []
+termination_by aux as ass asss => (asss.length, ass.length, as.length)
+
+@[simp]
+protected
+lemma associatorRight_nil : joinF.associatorRight (α:=α) [] = 𝟙 [] :=
+  by unfold joinF.associatorRight; rfl
+
+@[simp]
+protected
+lemma associatorRight_cons_nil {asss : List (List (List α))} : joinF.associatorRight ([]::asss) = joinF.associatorRight asss :=
+  by unfold joinF.associatorRight; rfl
+
+@[simp]
+protected
+lemma associatorRight_cons_cons_nil {ass : List (List α)} {asss : List (List (List α))} : joinF.associatorRight (([]::ass)::asss) = joinF.associatorRight (ass::asss) :=
+by
+  unfold joinF.associatorRight
+  conv => lhs; unfold associatorRight.aux; unfold associatorRight.aux
+
+@[simp]
+protected
+lemma associatorRight_cons_cons_cons {a : α} {as : List α} {ass : List (List α)} {asss : List (List (List α))} : joinF.associatorRight (((a::as)::ass)::asss) = DVect2.cons (𝟙 a) (joinF.associatorRight ((as::ass)::asss)) := by
+  unfold joinF.associatorRight
+  unfold joinF.associatorRight.aux
+  unfold joinF.associatorRight.aux
+  conv => lhs; unfold joinF.associatorRight.aux
+
+@[simp]
+protected
+lemma associator_left_right (asss : List (List (List α))) : joinF.associatorLeft asss ≫ joinF.associatorRight asss = 𝟙 _ := by
+  induction asss
+  case nil => rfl
+  case cons ass asss h_indsss =>
+    induction ass 
+    case nil => simp; exact h_indsss
+    case cons as ass h_indss =>
+      induction as
+      case nil => simp; exact h_indss
+      case cons a as h_inds => simp; rw [h_inds]; rfl
+
+@[simp]
+protected
+lemma associator_right_left (asss : List (List (List α))) : joinF.associatorRight asss ≫ joinF.associatorLeft asss = 𝟙 _ := by
+  induction asss
+  case nil => rfl
+  case cons ass asss h_indsss =>
+    induction ass 
+    case nil => simp; exact h_indsss
+    case cons as ass h_indss =>
+      induction as
+      case nil => simp; exact h_indss
+      case cons a as h_inds => simp; rw [h_inds]; rfl
 
 protected
-def associatorLeft : (asss : List (List (List α))) → ((mapF.obj (joinF (α:=α)) ⋙ joinF).obj asss ⟶ (joinF (α:=List α) ⋙ joinF).obj asss)
-| [] => 𝟙 []
-| (ass::asss) => by
-  dsimp
-  sorry
+def associator : (joinF (α:=List α) ⋙ joinF) ≅ (mapF.obj joinF ⋙ joinF) where
+  hom := {
+    app := joinF.associatorRight
+    naturality := by
+      intro _ _ fsss
+      induction fsss
+      case nil => rfl
+      case cons fss fsss h_indss =>
+        induction fss
+        case nil =>
+          conv => lhs; lhs; simp; change (joinF ⋙ joinF).map fsss
+          simp only [joinF.associatorRight_cons_nil]
+          rw [h_indss]
+          rfl
+        case cons fs fss h_inds  =>
+          induction fs
+          case nil =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.cons_append]; simp
+              change (joinF ⋙ joinF).map (DVect2.cons fss fsss)
+            simp only [joinF.associatorRight_cons_cons_nil]
+            rw [h_inds]
+            rfl
+          case cons f fs h_ind =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.cons_append]; simp
+              rw [DVect2.cons_append]
+              change DVect2.cons f ((joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            conv =>
+              rhs; rhs; change DVect2.cons f ((mapF.obj joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            simp only [joinF.associatorRight_cons_cons_cons]
+            rw [comp_cons, comp_cons]
+            rw [h_ind, Category.comp_id, Category.id_comp]
+  }
+  inv := {
+    app := joinF.associatorLeft
+    naturality := by
+      intro _ _ fsss
+      induction fsss
+      case nil => rfl
+      case cons fss fsss h_indss =>
+        induction fss
+        case nil =>
+          conv => lhs; lhs; simp; change (mapF.obj joinF ⋙ joinF).map fsss
+          simp only [joinF.associatorLeft_cons_nil]
+          rw [h_indss]
+          rfl
+        case cons fs fss h_inds  =>
+          induction fs
+          case nil =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.nil_append]; simp
+              change (mapF.obj joinF ⋙ joinF).map (DVect2.cons fss fsss)
+            simp only [joinF.associatorLeft_cons_cons_nil]
+            rw [h_inds]
+            rfl
+          case cons f fs h_ind =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.cons_append]; simp
+              rw [DVect2.cons_append]
+              change DVect2.cons f ((mapF.obj joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            conv =>
+              rhs; rhs; change DVect2.cons f ((joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            simp only [joinF.associatorLeft_cons_cons_cons]
+            rw [comp_cons, comp_cons]
+            rw [h_ind, Category.comp_id, Category.id_comp]
+  }
+  hom_inv_id := by ext; intros; simp
+  inv_hom_id := by ext; intros; simp
 
 end joinF
 
