@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Functor.Basic
+import Mathlib.CategoryTheory.Functor.Category
 
 import Moncalc.Data.DVect2.Defs
 import Moncalc.Data.DVect2.Basic
@@ -118,11 +119,127 @@ theorem comp_nil : CategoryStruct.comp (obj:=List α) (X:=[]) (Y:=[]) (Z:=[]) DV
 @[simp]
 theorem comp_cons : ∀ {a b c : α} {as bs cs : List α} {f : a ⟶ b} {fs : as ⟶ bs} {g : b ⟶ c} {gs : bs ⟶ cs}, CategoryStruct.comp (obj:=List α) (X:=a::as) (Y:=b::bs) (Z:=c::cs) (DVect2.cons f fs) (DVect2.cons g gs) = DVect2.cons (f ≫ g) (fs ≫ gs) := rfl
 
+--- Functional extensionality for functors into `List α`
+theorem eqF_List {β : Type v} [Category β] : (F G : Functor α (List β)) → (∀ (a : α), F.obj a = G.obj a) → (∀ (a₁ a₂ : α) (f : a₁ ⟶ a₂), DVect2.Eq (F.map f) (G.map f)) → F = G
+| Functor.mk F _ _, Functor.mk G _ _ => by
+  cases F with | mk F_obj F_map =>
+  cases G with | mk G_obj G_map =>
+  intro hobj
+  have : F_obj = G_obj := funext hobj
+  cases this
+  dsimp
+  intro hmap
+  have : @F_map = @G_map := by
+    apply funext; intro a; apply funext; intro b
+    apply funext
+    intro f
+    exact (hmap a b f).eq_of
+  cases this
+  rfl
+
 end Category
 
 
 /-!
-## Functorial `append`/`hAppend`
+## Basic list operations as functors
+
+One can obtain a functor from an operation on `List` together with its counterpart on `DVect2`.
+-/
+
+/-!
+### Functorial `map`
+-/
+
+def mapF {α : Type u} [Category α] {β : Type v} [Category β] : Functor α β ⥤ Functor (List α) (List β) where
+  obj := λ F => {
+    obj := List.map F.obj
+    map := DVect2.map F.obj F.obj F.map
+    map_id := by
+      intro as
+      induction as
+      case nil => rfl
+      case cons a as h_ind =>
+        dsimp [DVect2.map] at *
+        rw [h_ind, F.map_id]
+    map_comp :=
+      let rec map_comp_aux : ∀ {as bs cs : List α} (fs : Hom as bs) (gs : Hom bs cs), List.comp (DVect2.map F.obj F.obj F.map fs) (DVect2.map F.obj F.obj F.map gs) = DVect2.map F.obj F.obj F.map (List.comp fs gs)
+      | [], [], [], DVect2.nil, DVect2.nil => rfl
+      | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => by
+        dsimp [DVect2.map, List.comp]
+        rw [F.map_comp, map_comp_aux fs gs]
+      by
+        intro fs gs
+        simp [CategoryStruct.comp]
+        rw [map_comp_aux]
+  }
+  map := @λ F G φ => {
+    app := DVect2.dfromList F.obj G.obj φ.app
+    naturality := by
+      intros as bs fs
+      dsimp [CategoryStruct.comp]
+      induction fs <;> dsimp [DVect2.map, List.comp]
+      /- case nil has been completed -/
+      case cons f fs h_ind =>
+        rw [φ.naturality]
+        apply congrArg
+        exact h_ind
+  }
+  map_id := λ F => by
+    ext as; dsimp
+    induction as
+    case nil => rfl
+    case cons a as h_ind =>
+      dsimp [DVect2.dfromList]
+      rw [h_ind]
+  map_comp := by
+    intro F G H φ ψ
+    ext as; dsimp
+    induction as
+    case nil => rfl
+    case cons a as h_ind =>
+      dsimp [DVect2.dfromList]
+      rw [h_ind]
+
+namespace mapF
+
+@[simp]
+theorem obj_obj_cons {α : Type u} [Category α] {β : Type v} [Category β] {F : Functor α β} : ∀ {a : α} {as : List α}, (mapF.obj F).obj (a::as) = F.obj a :: (mapF.obj F).obj as := rfl
+
+@[simp]
+theorem obj_map_cons {α : Type u} [Category α] {β : Type v} [Category β] {F : Functor α β} : ∀ {a b : α} {as bs : List α} {f : a ⟶ b} {fs : as ⟶ bs}, (mapF.obj F).map (DVect2.cons f fs) = DVect2.cons (F.map f) ((mapF.obj F).map fs) := rfl
+
+@[simp]
+theorem map_cons {α : Type u} [Category α] {β : Type v} [Category β] {F G : Functor α β} {φ : F ⟶ G} : ∀ {a : α} {as : List α}, (mapF.map φ).app (a::as) = DVect2.cons (φ.app a) ((mapF.map φ).app as) := rfl
+
+--- `mapF : Functor α α ⟶ Functor (List α) (List α)` preserves the identity functor
+@[simp]
+protected
+theorem obj_id {α : Type u} [Category α] : mapF.obj (𝟭 α) = 𝟭 (List α) := by
+  apply eqF_List <;> dsimp [Functor.id]
+  . intro as
+    change List.map id as = as
+    rw [List.map_id]
+  . intro as₁ as₂ fs
+    change DVect2.Eq (DVect2.map id id id fs) fs
+    exact DVect2.map_id
+
+--- `mapF : Functor α β ⟶ Functor (List α) (List β)` respects functor composition
+@[simp]
+protected
+theorem obj_comp {α : Type u} [Category α] {β : Type v} [Category β] {γ : Type w} [Category γ] (F : Functor α β) (G : Functor β γ) : mapF.obj (F ⋙ G) = mapF.obj F ⋙ mapF.obj G := by
+  dsimp [Functor.comp, mapF]
+  apply eqF_List <;> dsimp
+  . intro as
+    rw [←List.map_comp G.obj F.obj]
+    rfl
+  . intro as₁ as₂ fs
+    exact DVect2.map_comp
+
+end mapF
+
+
+/-!
+### Functorial `append`
 -/
 namespace appendF
 
@@ -160,25 +277,41 @@ end appendF
 
 
 /-!
-## Misceleneous lemmas
+## Functorial join
 -/
 
---- Functional extensionality for functors into `List α`
-theorem eqF_List {α : Type u} [Category α] {β : Type v} [Category β] : (F G : Functor α (List β)) → (∀ (a : α), F.obj a = G.obj a) → (∀ (a₁ a₂ : α) (f : a₁ ⟶ a₂), DVect2.Eq (F.map f) (G.map f)) → F = G
-| Functor.mk F _ _, Functor.mk G _ _ => by
-  cases F with | mk F_obj F_map =>
-  cases G with | mk G_obj G_map =>
-  intro hobj
-  have : F_obj = G_obj := funext hobj
-  cases this
-  dsimp
-  intro hmap
-  have : @F_map = @G_map := by
-    apply funext; intro a; apply funext; intro b
-    apply funext
-    intro f
-    exact (hmap a b f).eq_of
-  cases this
-  rfl
+--- The functor `List (List α) ⥤ List α` consisting of `List.join` on objects and `DVect2.join` on morhisms.
+def joinF {α : Type u} [Category α] : Functor (List (List α)) (List α) where
+  obj := List.join
+  map := DVect2.join
+  map_id := by
+    intro ass
+    simp [CategoryStruct.id]
+    induction ass
+    case nil => rfl
+    case cons as ass h_ind =>
+      dsimp [List.id, List.join, DVect2.join] at *
+      rw [DVect2.fromList_append, h_ind]
+      rfl
+  map_comp :=
+    let rec map_comp_aux {α : Type u} [Category α] : ∀ {ass bss css : List (List α)} (fss : ass ⟶ bss) (gss : bss ⟶ css), Eq (α:=ass.join ⟶ css.join) (DVect2.join (fss ≫ gss)) (fss.join ≫ gss.join)
+    | [], [], [], DVect2.nil, DVect2.nil => rfl
+    | (_::_), (_::_), (_::_), DVect2.cons _ fss, DVect2.cons _ gss => by
+      dsimp [DVect2.join]
+      rw [map_comp_aux fss gss, appendF.map_comp]
+    map_comp_aux
+
+namespace joinF
+
+@[simp]
+protected
+theorem obj_cons {α : Type u} [Category α] : ∀ {as : List α} {ass : List (List α)}, (joinF (α:=α)).obj (as::ass) = as ++ (joinF (α:=α)).obj ass := rfl
+
+@[simp]
+protected
+theorem map_cons {α : Type u} [Category α] : ∀ {as bs : List α} {ass bss : List (List α)} {fs : as ⟶ bs} {fss : ass ⟶ bss}, (joinF (α:=α)).map (DVect2.cons fs fss) = HAppend.hAppend (α:=DVect2 (Quiver.Hom (V:=α)) as bs) (β:=DVect2 (Quiver.Hom (V:=α)) ass.join bss.join) fs ((joinF (α:=α)).map fss) := rfl
+
+end joinF
+
 
 end CategoryTheory.List

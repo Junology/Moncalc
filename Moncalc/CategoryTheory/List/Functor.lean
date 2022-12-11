@@ -17,7 +17,7 @@ import Moncalc.CategoryTheory.List.Basic
 As constructed in `CategoryTheory.List.Basic`, `List α` is a `Category` provided so is `α`.
 Furthermore, it is actually a 2-functor; i.e. there are the following data:
 
-  - A functor `mapF : Functor α β ⥤ Functor (List α) (List β)`;
+  - A functor `mapF : Functor α β ⥤ Functor (List α) (List β)`, which is defined in [here](CategoryTheory/List/Basic.lean);
   - A natural isomorphism `mapF.unitor : 𝟭 (List α) ≅ mapF.obj (𝟭 α)`;
   - A natural isomorphism `mapF.compositor : mapF.obj F ⋙ mapF.obj ≅ mapF.obj (F ⋙ G)`.
 
@@ -31,96 +31,7 @@ namespace CategoryTheory.List
 
 universe u v w
 
-def mapF {α : Type u} [Category α] {β : Type v} [Category β] : Functor α β ⥤ Functor (List α) (List β) where
-  obj := λ F => {
-    obj := List.map F.obj
-    map := DVect2.map F.obj F.obj F.map
-    map_id := by
-      intro as
-      induction as
-      case nil => rfl
-      case cons a as h_ind =>
-        dsimp [DVect2.map] at *
-        rw [h_ind, F.map_id]
-    map_comp :=
-      let rec map_comp_aux : ∀ {as bs cs : List α} (fs : Hom as bs) (gs : Hom bs cs), List.comp (DVect2.map F.obj F.obj F.map fs) (DVect2.map F.obj F.obj F.map gs) = DVect2.map F.obj F.obj F.map (List.comp fs gs)
-      | [], [], [], DVect2.nil, DVect2.nil => rfl
-      | (_::_), (_::_), (_::_), DVect2.cons f fs, DVect2.cons g gs => by
-        dsimp [DVect2.map, List.comp]
-        rw [F.map_comp, map_comp_aux fs gs]
-      by
-        intro fs gs
-        simp [CategoryStruct.comp]
-        rw [map_comp_aux]
-  }
-  map := @λ F G φ => {
-    app := DVect2.dfromList F.obj G.obj φ.app
-    naturality := by
-      intros as bs fs
-      dsimp [CategoryStruct.comp]
-      induction fs <;> dsimp [DVect2.map, List.comp]
-      /- case nil has been completed -/
-      case cons f fs h_ind =>
-        rw [φ.naturality]
-        apply congrArg
-        exact h_ind
-  }
-  map_id := λ F => by
-    ext as; dsimp
-    induction as
-    case nil => rfl
-    case cons a as h_ind =>
-      dsimp [DVect2.dfromList]
-      rw [h_ind]
-  map_comp := by
-    intro F G H φ ψ
-    ext as; dsimp
-    induction as
-    case nil => rfl
-    case cons a as h_ind =>
-      dsimp [DVect2.dfromList]
-      rw [h_ind]
-
 namespace mapF
-
-
-/-!
-## Equations around `List.mapF`
--/
-
-@[simp]
-theorem obj_obj_cons {α : Type u} [Category α] {β : Type v} [Category β] {F : Functor α β} : ∀ {a : α} {as : List α}, (mapF.obj F).obj (a::as) = F.obj a :: (mapF.obj F).obj as := rfl
-
-@[simp]
-theorem obj_map_cons {α : Type u} [Category α] {β : Type v} [Category β] {F : Functor α β} : ∀ {a b : α} {as bs : List α} {f : a ⟶ b} {fs : as ⟶ bs}, (mapF.obj F).map (DVect2.cons f fs) = DVect2.cons (F.map f) ((mapF.obj F).map fs) := rfl
-
-@[simp]
-theorem map_cons {α : Type u} [Category α] {β : Type v} [Category β] {F G : Functor α β} {φ : F ⟶ G} : ∀ {a : α} {as : List α}, (mapF.map φ).app (a::as) = DVect2.cons (φ.app a) ((mapF.map φ).app as) := rfl
-
---- `mapF : Functor α α ⟶ Functor (List α) (List α)` preserves the identity functor
-@[simp]
-protected
-theorem obj_id {α : Type u} [Category α] : mapF.obj (𝟭 α) = 𝟭 (List α) := by
-  apply eqF_List <;> dsimp [Functor.id]
-  . intro as
-    change List.map id as = as
-    rw [List.map_id]
-  . intro as₁ as₂ fs
-    change DVect2.Eq (DVect2.map id id id fs) fs
-    exact DVect2.map_id
-
---- `mapF : Functor α β ⟶ Functor (List α) (List β)` respects functor composition
-@[simp]
-protected
-theorem obj_comp {α : Type u} [Category α] {β : Type v} [Category β] {γ : Type w} [Category γ] (F : Functor α β) (G : Functor β γ) : mapF.obj (F ⋙ G) = mapF.obj F ⋙ mapF.obj G := by
-  dsimp [Functor.comp, mapF]
-  apply eqF_List <;> dsimp
-  . intro as
-    rw [←List.map_comp G.obj F.obj]
-    rfl
-  . intro as₁ as₂ fs
-    exact DVect2.map_comp
-
 
 /-!
 ## Unitor

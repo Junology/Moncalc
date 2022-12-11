@@ -118,41 +118,8 @@ theorem naturator_oplax_lax (as₁ as₂ : List α) : appendF.naturatorOplax F a
 end appendF
 
 
-/-!
-## `List.joinF` the functorial join
--/
-
---- The functor `List (List α) ⥤ List α` consisting of `List.join` on objects and `DVect2.join` on morhisms.
-def joinF {α : Type u} [Category α] : Functor (List (List α)) (List α) where
-  obj := List.join
-  map := DVect2.join
-  map_id := by
-    intro ass
-    simp [CategoryStruct.id]
-    induction ass
-    case nil => rfl
-    case cons as ass h_ind =>
-      dsimp [List.id, List.join, DVect2.join] at *
-      rw [DVect2.fromList_append, h_ind]
-      rfl
-  map_comp :=
-    let rec map_comp_aux {α : Type u} [Category α] : ∀ {ass bss css : List (List α)} (fss : ass ⟶ bss) (gss : bss ⟶ css), Eq (α:=ass.join ⟶ css.join) (DVect2.join (fss ≫ gss)) (fss.join ≫ gss.join)
-    | [], [], [], DVect2.nil, DVect2.nil => rfl
-    | (_::_), (_::_), (_::_), DVect2.cons _ fss, DVect2.cons _ gss => by
-      dsimp [DVect2.join]
-      rw [map_comp_aux fss gss, appendF.map_comp]
-    map_comp_aux
-
 
 namespace joinF
-
-@[simp]
-protected
-theorem obj_cons {α : Type u} [Category α] : ∀ {as : List α} {ass : List (List α)}, (joinF (α:=α)).obj (as::ass) = as ++ (joinF (α:=α)).obj ass := rfl
-
-@[simp]
-protected
-theorem map_cons {α : Type u} [Category α] : ∀ {as bs : List α} {ass bss : List (List α)} {fs : as ⟶ bs} {fss : ass ⟶ bss}, (joinF (α:=α)).map (DVect2.cons fs fss) = HAppend.hAppend (α:=DVect2 (Quiver.Hom (V:=α)) as bs) (β:=DVect2 (Quiver.Hom (V:=α)) ass.join bss.join) fs ((joinF (α:=α)).map fss) := rfl
 
 /-!
 ### The naturality of `List.joinF`
@@ -476,6 +443,20 @@ def unitorRight : 𝟭 (List α) ≅ mapF.obj (singletonF (α:=α)) ⋙ joinF wh
   hom_inv_id := by ext; intros; simp
   inv_hom_id := by ext; intros; simp
 
+set_option autoImplicit false
+
+--- `joinF` is a monoidal functor
+protected
+def tensoratorLax : (ass bss : List (List α)) → (((joinF (α:=α)).obj ass ++ (joinF (α:=α).obj bss)) ⟶ (joinF.obj (ass++bss)))
+| [], bss => 𝟙 ((joinF (α:=α)).obj bss)
+| (as::ass), bss => sorry
+
+protected
+def associatorLeft : (asss : List (List (List α))) → ((mapF.obj (joinF (α:=α)) ⋙ joinF).obj asss ⟶ (joinF (α:=List α) ⋙ joinF).obj asss)
+| [] => 𝟙 []
+| (ass::asss) => by
+  dsimp
+  sorry
 
 end joinF
 
