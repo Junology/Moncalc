@@ -306,7 +306,7 @@ namespace joinF
 variable {α : Type u} [Category α]
 
 /-!
-### Coherence as equations
+### Monad laws as equations
 -/
 
 --- Left unitality of `List.joinF` with respect to `List.singletonF` as an equality.
@@ -354,7 +354,7 @@ theorem assoc : joinF (α:=List α) ⋙ joinF = mapF.obj joinF ⋙ joinF := by
 
 
 /-!
-### Coherence as natural isomorphisms
+### Monad laws as natural isomorphisms
 -/
 
 protected
