@@ -14,7 +14,6 @@ import Moncalc.CategoryTheory.Whiskering
 import Moncalc.CategoryTheory.List.Basic
 import Moncalc.CategoryTheory.List.Functor
 import Moncalc.CategoryTheory.List.Monad
-import Moncalc.CategoryTheory.NatTrans
 
 namespace CategoryTheory
 
