@@ -305,6 +305,10 @@ namespace joinF
 
 variable {α : Type u} [Category α]
 
+/-!
+### Coherence as equations
+-/
+
 --- Left unitality of `List.joinF` with respect to `List.singletonF` as an equality.
 @[simp]
 protected
@@ -347,6 +351,11 @@ theorem assoc : joinF (α:=List α) ⋙ joinF = mapF.obj joinF ⋙ joinF := by
   apply eqF_List <;> dsimp
   . intros; exact List.join_join _
   . intros; exact DVect2.join_join _
+
+
+/-!
+### Coherence as natural isomorphisms
+-/
 
 protected
 def unitorLeftLax : (as : List α) → (as ⟶ ((singletonF (α:=List α) ⋙ joinF).obj as))
@@ -405,6 +414,64 @@ def unitorLeft : 𝟭 (List α) ≅ singletonF (α:=List α) ⋙ joinF where
         dsimp [singletonF, joinF, DVect2.join] at *
         rw [DVect2.cons_append, comp_cons, Category.id_comp, Category.comp_id]
         rw [h_ind]
+  }
+  hom_inv_id := by ext; intros; simp
+  inv_hom_id := by ext; intros; simp
+
+protected
+def unitorRightLax : (as : List α) → (as ⟶ (mapF.obj (singletonF (α:=α)) ⋙ joinF).obj as)
+| [] => 𝟙 []
+| (a::as) => DVect2.cons (𝟙 a) (joinF.unitorRightLax as)
+
+protected
+def unitorRightOplax : (as : List α) → ((mapF.obj (singletonF (α:=α)) ⋙ joinF).obj as ⟶ as)
+| [] => 𝟙 []
+| (a::as) => DVect2.cons (𝟙 a) (joinF.unitorRightOplax as)
+
+@[simp]
+protected
+lemma unitorRight_lax_oplax (as : List α) : joinF.unitorRightLax as ≫ joinF.unitorRightOplax as = 𝟙 as := by
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp [joinF.unitorRightLax, joinF.unitorRightOplax]
+    rw [Category.id_comp, h_ind]
+
+@[simp]
+protected
+lemma unitorRight_oplax_lax (as : List α) : joinF.unitorRightOplax as ≫ joinF.unitorRightLax as = 𝟙 _ := by
+  induction as
+  case nil => rfl
+  case cons a as h_ind =>
+    dsimp [joinF.unitorRightLax, joinF.unitorRightOplax]
+    rw [Category.id_comp, h_ind]
+    rfl
+
+protected
+def unitorRight : 𝟭 (List α) ≅ mapF.obj (singletonF (α:=α)) ⋙ joinF where
+  hom := {
+    app := joinF.unitorRightLax
+    naturality := by
+      intro _ _ fs; dsimp
+      induction fs
+      case nil => rfl
+      case cons f fs h_ind =>
+        dsimp [joinF.unitorRightLax]
+        rw [Category.comp_id, h_ind]
+        dsimp [singletonF, HAppend.hAppend, DVect2.append]
+        rw [Category.id_comp]
+  }
+  inv := {
+    app := joinF.unitorRightOplax
+    naturality := by
+      intro _ _ fs; dsimp
+      induction fs
+      case nil => rfl
+      case cons f fs h_ind =>
+        dsimp [joinF.unitorRightOplax]
+        rw [←h_ind]
+        dsimp [singletonF, HAppend.hAppend, DVect2.append]
+        rw [Category.comp_id, Category.id_comp]
   }
   hom_inv_id := by ext; intros; simp
   inv_hom_id := by ext; intros; simp
