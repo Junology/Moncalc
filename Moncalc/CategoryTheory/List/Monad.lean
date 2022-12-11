@@ -122,7 +122,7 @@ end appendF
 namespace joinF
 
 /-!
-### The naturality of `List.joinF`
+### Naturality of `List.joinF`
 -/
 section naturality
 
