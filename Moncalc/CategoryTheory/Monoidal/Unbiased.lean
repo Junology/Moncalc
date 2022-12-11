@@ -50,7 +50,7 @@ class LaxMonoidal (α : Type u) extends Category α where
     whiskerRight (List.mapF.map associator) tensor
       ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj List.joinF) associator
-      ≫ whiskerRight List.joinF.associator.inv _
+      ≫ whiskerRight List.joinF.associator.hom _
 
 class UnbiasedMonoidal (α : Type u) extends Category α where
   tensor : Functor (List α) α
@@ -80,7 +80,7 @@ class UnbiasedMonoidal (α : Type u) extends Category α where
     whiskerRight (List.mapF.map associator.hom) tensor
       ≫ whiskerRight (List.mapF.compositor List.joinF tensor).inv tensor
       ≫ whiskerLeft (List.mapF.obj List.joinF) associator.hom
-      ≫ whiskerRight List.joinF.associator.inv _
+      ≫ whiskerRight List.joinF.associator.hom _
 
 instance LaxMonoidalOfUnbiased (α : Type u) [UnbiasedMonoidal α] : LaxMonoidal α where
   tensor := UnbiasedMonoidal.tensor
@@ -93,7 +93,7 @@ instance LaxMonoidalOfUnbiased (α : Type u) [UnbiasedMonoidal α] : LaxMonoidal
 instance instUnbiasedMonoidalList (α : Type u) [Category α] : UnbiasedMonoidal (List α) where
   tensor := List.joinF
   unitor := List.joinF.unitorLeft
-  associator := NatIso.ofEq (List.joinF.assoc).symm
+  associator := List.joinF.associator
   coherence_unit_left := by
     ext ass
     simp [whiskerLeft, whiskerRight, Functor.comp]

@@ -542,41 +542,8 @@ lemma associator_right_left (asss : List (List (List α))) : joinF.associatorRig
       case cons a as h_inds => simp; rw [h_inds]; rfl
 
 protected
-def associator : (joinF (α:=List α) ⋙ joinF) ≅ (mapF.obj joinF ⋙ joinF) where
+def associator : (mapF.obj joinF ⋙ joinF) ≅ (joinF (α:=List α) ⋙ joinF) where
   hom := {
-    app := joinF.associatorRight
-    naturality := by
-      intro _ _ fsss
-      induction fsss
-      case nil => rfl
-      case cons fss fsss h_indss =>
-        induction fss
-        case nil =>
-          conv => lhs; lhs; simp; change (joinF ⋙ joinF).map fsss
-          simp only [joinF.associatorRight_cons_nil]
-          rw [h_indss]
-          rfl
-        case cons fs fss h_inds  =>
-          induction fs
-          case nil =>
-            conv =>
-              lhs; lhs; simp; rw [DVect2.cons_append]; simp
-              change (joinF ⋙ joinF).map (DVect2.cons fss fsss)
-            simp only [joinF.associatorRight_cons_cons_nil]
-            rw [h_inds]
-            rfl
-          case cons f fs h_ind =>
-            conv =>
-              lhs; lhs; simp; rw [DVect2.cons_append]; simp
-              rw [DVect2.cons_append]
-              change DVect2.cons f ((joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
-            conv =>
-              rhs; rhs; change DVect2.cons f ((mapF.obj joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
-            simp only [joinF.associatorRight_cons_cons_cons]
-            rw [comp_cons, comp_cons]
-            rw [h_ind, Category.comp_id, Category.id_comp]
-  }
-  inv := {
     app := joinF.associatorLeft
     naturality := by
       intro _ _ fsss
@@ -606,6 +573,39 @@ def associator : (joinF (α:=List α) ⋙ joinF) ≅ (mapF.obj joinF ⋙ joinF) 
             conv =>
               rhs; rhs; change DVect2.cons f ((joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
             simp only [joinF.associatorLeft_cons_cons_cons]
+            rw [comp_cons, comp_cons]
+            rw [h_ind, Category.comp_id, Category.id_comp]
+  }
+  inv := {
+    app := joinF.associatorRight
+    naturality := by
+      intro _ _ fsss
+      induction fsss
+      case nil => rfl
+      case cons fss fsss h_indss =>
+        induction fss
+        case nil =>
+          conv => lhs; lhs; simp; change (joinF ⋙ joinF).map fsss
+          simp only [joinF.associatorRight_cons_nil]
+          rw [h_indss]
+          rfl
+        case cons fs fss h_inds  =>
+          induction fs
+          case nil =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.cons_append]; simp
+              change (joinF ⋙ joinF).map (DVect2.cons fss fsss)
+            simp only [joinF.associatorRight_cons_cons_nil]
+            rw [h_inds]
+            rfl
+          case cons f fs h_ind =>
+            conv =>
+              lhs; lhs; simp; rw [DVect2.cons_append]; simp
+              rw [DVect2.cons_append]
+              change DVect2.cons f ((joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            conv =>
+              rhs; rhs; change DVect2.cons f ((mapF.obj joinF ⋙ joinF).map (DVect2.cons (DVect2.cons fs fss) fsss))
+            simp only [joinF.associatorRight_cons_cons_cons]
             rw [comp_cons, comp_cons]
             rw [h_ind, Category.comp_id, Category.id_comp]
   }
